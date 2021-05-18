@@ -1,0 +1,7 @@
+API_KEY = ""
+API_SECRET = ""
+BUCKET_NAME = ""
+ORG_NAME = ""
+INFLUX_TOKEN = ""
+INFLUX_URL = ""
+
