@@ -1,4 +1,4 @@
-import myCredentials as cred
+import credentials as cred
 
 from time import sleep
 from binance.client import Client
@@ -15,15 +15,21 @@ def getbalances(client):
     allBalances = info['balances']
     actualBalances = {}
     BTCtoEuro = float(client.get_avg_price(symbol='BTCEUR')['price'])
+    USDTtoEuro = float(client.get_avg_price(symbol='EURUSDT')['price'])
     print("The BTC to Euro conversion at the moment of fetching is:{}".format(BTCtoEuro))
     print("These are the coins in your wallet:")
     for bal in allBalances:
         if not bal['free'] == bal['locked']:
             asset = bal['asset']
             print(asset)
-            if asset == 'EUR' or asset == 'USDT' or asset == 'BUSD':
-                continue
             quantity = float(bal['free']) + float(bal['locked'])
+
+            if asset == 'EUR':
+                btcvalue = quantity / BTCtoEuro
+                eurovalue = quantity
+            if asset == 'USDT' or asset == 'BUSD':
+                continue
+
             if asset == 'BTC':
                 btcvalue = quantity
                 eurovalue = btcvalue * BTCtoEuro
@@ -32,25 +38,33 @@ def getbalances(client):
                     btcvalue = float(client.get_avg_price(symbol=asset + 'BTC')['price']) * quantity
                     eurovalue = btcvalue * BTCtoEuro
                 except:
+                    pass
+                try:
                     btcvalue = float(client.get_avg_price(symbol=asset + 'BNB')['price']) * quantity
                     btcvalue = float(client.get_avg_price(symbol='BNBBTC')['price']) * btcvalue
                     eurovalue = btcvalue * BTCtoEuro
+                except:
+                    pass
+
+                try:
+                    eurovalue = float(client.get_avg_price(symbol=asset + 'EUR')['price']) * quantity
+                    btcvalue = eurovalue / BTCtoEuro
+                except:
+                    pass
+
+                try:
+                    usdtvalue = float(client.get_avg_price(symbol=asset + 'USDT')['price']) * quantity
+                    eurovalue = usdtvalue / USDTtoEuro
+                    btcvalue = eurovalue / BTCtoEuro
+                except:
+                    pass
+
 
             actualBalances[asset] = {'amount': quantity,
                                      'BTC_value': btcvalue,
                                      'Euro_value': eurovalue}
 
     return actualBalances
-
-
-def pushData(s, s_id, sheet_name, data):
-    request = s.values().append(spreadsheetId=s_id,
-                                range=sheet_name + '!A1',
-                                valueInputOption="USER_ENTERED",
-                                insertDataOption="INSERT_ROWS",
-                                body={"values": data})
-    response = request.execute()
-    return response
 
 
 def pushDB(wD, wO):
@@ -88,7 +102,7 @@ def pushDB(wD, wO):
 def getOverview(balance):
 
     # parse the balance to fit into the correct form for pushing it into the sheets
-    # every asset is a row in the sheet with: Timestamp	Coin_Name	Amount	Euro_Value	BTC_Value	Euro_ATH	BTC_ATH
+    # every asset should have the following data: Timestamp	Coin_Name	Amount	Euro_Value	BTC_Value
     # as columns.
 
     time = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
