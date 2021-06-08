@@ -1,4 +1,4 @@
-import myCredentials as cred
+import credentials as cred
 
 from time import sleep
 from binance.client import Client
@@ -122,10 +122,16 @@ def getOverview(balance):
 
 
 if __name__ == '__main__':
+
     client = Client(cred.API_KEY, cred.API_SECRET)
-    #while True:
-    b = getbalances(client)
-    wallet_detail, wallet_overview = getOverview(b)
-    pushDB(wallet_detail, wallet_overview)
-    #    sleep(55)
+    while True:
+        try:
+            b = getbalances(client)
+            wallet_detail, wallet_overview = getOverview(b)
+            pushDB(wallet_detail, wallet_overview)
+            sleep(55)
+        except:
+            print("API might be down, recreating client")
+            client = None
+            client = Client(cred.API_KEY, cred.API_SECRET)
 
