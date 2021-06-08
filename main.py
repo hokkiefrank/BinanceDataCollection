@@ -1,10 +1,18 @@
-import credentials as cred
-
 from time import sleep
 from binance.client import Client
 from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+
+# Get environment variables from OS/Docker image
+import os
+
+API_KEY = os.environ['API_KEY']
+API_SECRET = os.environ['API_SECRET']
+BUCKET_NAME = os.environ['BUCKET_NAME']
+ORG_NAME = os.environ['ORG_NAME']
+INFLUX_TOKEN = os.environ['INFLUX_TOKEN']
+INFLUX_URL = os.environ['INFLUX_URL']
 
 # project to get the balance from the wallet per coin per minute, and write that to a spreadsheet for easy tracking
 # of the wallet.
@@ -69,10 +77,10 @@ def getbalances(client):
 
 def pushDB(wD, wO):
     # You can generate a Token from the "Tokens Tab" in the UI
-    token = cred.INFLUX_TOKEN
-    org = cred.ORG_NAME
-    bucket = cred.BUCKET_NAME
-    url = cred.INFLUX_URL
+    token = INFLUX_TOKEN
+    org = ORG_NAME
+    bucket = BUCKET_NAME
+    url = INFLUX_URL
 
     client = InfluxDBClient(url=url, token=token)
     write_api = client.write_api(write_options=SYNCHRONOUS)
@@ -123,7 +131,7 @@ def getOverview(balance):
 
 if __name__ == '__main__':
 
-    client = Client(cred.API_KEY, cred.API_SECRET)
+    client = Client(API_KEY,API_SECRET)
     while True:
         try:
             b = getbalances(client)
@@ -133,5 +141,5 @@ if __name__ == '__main__':
         except:
             print("API might be down, recreating client")
             client = None
-            client = Client(cred.API_KEY, cred.API_SECRET)
+            client = Client(API_KEY,API_SECRET)
 
