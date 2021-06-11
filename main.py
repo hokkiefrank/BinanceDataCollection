@@ -7,12 +7,24 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 # Get environment variables from OS/Docker image
 import os
 
-API_KEY = os.environ['API_KEY']
-API_SECRET = os.environ['API_SECRET']
-BUCKET_NAME = os.environ['BUCKET_NAME']
-ORG_NAME = os.environ['ORG_NAME']
-INFLUX_TOKEN = os.environ['INFLUX_TOKEN']
-INFLUX_URL = os.environ['INFLUX_URL']
+TEST = False
+
+if TEST:
+    import credentials as cred
+
+    API_KEY = cred.API_KEY
+    API_SECRET = cred.API_SECRET
+    BUCKET_NAME =cred.BUCKET_NAME
+    ORG_NAME = cred.ORG_NAME
+    INFLUX_TOKEN = cred.INFLUX_TOKEN
+    INFLUX_URL = cred.INFLUX_URL
+else:
+    API_KEY = os.environ['API_KEY']
+    API_SECRET = os.environ['API_SECRET']
+    BUCKET_NAME = os.environ['BUCKET_NAME']
+    ORG_NAME = os.environ['ORG_NAME']
+    INFLUX_TOKEN = os.environ['INFLUX_TOKEN']
+    INFLUX_URL = os.environ['INFLUX_URL']
 
 # project to get the balance from the wallet per coin per minute, and write that to a spreadsheet for easy tracking
 # of the wallet.
@@ -138,8 +150,9 @@ if __name__ == '__main__':
             wallet_detail, wallet_overview = getOverview(b)
             pushDB(wallet_detail, wallet_overview)
             sleep(55)
-        except:
-            print("API might be down, recreating client")
+        except Exception as e:
+            print(e)
+            print("Error above is actual error, recreating client and retrying")
             client = None
             client = Client(API_KEY,API_SECRET)
 
