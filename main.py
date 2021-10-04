@@ -8,7 +8,7 @@ import subprocess
 # Get environment variables from OS/Docker image
 import os
 
-TEST = True
+TEST = False
 
 if TEST:
     import credentials as cred
@@ -33,9 +33,9 @@ else:
 
 def getbalances(client):
     info = client.get_account()
-    savingsInfo = client.get_lending_position()
-    allBalances = info['balances']
-    print(allBalances)
+    #savingsInfo = client.get_lending_position()
+    #allBalances = info['balances']
+    #print(allBalances)
     actualBalances = {}
     BTCtoEuro = float(client.get_avg_price(symbol='BTCEUR')['price'])
     USDTtoEuro = float(client.get_avg_price(symbol='EURUSDT')['price'])
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         try:
             b = getbalances(client)
             wallet_detail, wallet_overview = getOverview(b)
-            #pushDB(wallet_detail, wallet_overview)
+            pushDB(wallet_detail, wallet_overview)
             sleep(55)
         except Exception as e:
             print("{}\n Exiting".format(e))
