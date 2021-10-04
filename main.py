@@ -3,11 +3,12 @@ from binance.client import Client
 from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+import subprocess
 
 # Get environment variables from OS/Docker image
 import os
 
-TEST = False
+TEST = True
 
 if TEST:
     import credentials as cred
@@ -32,13 +33,16 @@ else:
 
 def getbalances(client):
     info = client.get_account()
+    savingsInfo = client.get_lending_position()
     allBalances = info['balances']
+    print(allBalances)
     actualBalances = {}
     BTCtoEuro = float(client.get_avg_price(symbol='BTCEUR')['price'])
     USDTtoEuro = float(client.get_avg_price(symbol='EURUSDT')['price'])
     print("The BTC to Euro conversion at the moment of fetching is:{}".format(BTCtoEuro))
     print("These are the coins in your wallet:")
     for bal in allBalances:
+        continue
         if not bal['free'] == bal['locked']:
             asset = bal['asset']
             print(asset)
@@ -79,10 +83,27 @@ def getbalances(client):
                 except:
                     pass
 
-
             actualBalances[asset] = {'amount': quantity,
                                      'BTC_value': btcvalue,
                                      'Euro_value': eurovalue}
+
+    try:
+        f = open("radix.txt", "r")
+        print(f.read())
+        bashCommand = "curl -s --request GET --url https://api.bitfinex.com/v1/pubticker/xrdusd | jq -r '.last_price'"
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        print(output)
+        usdtvalue = output * f.read()
+        eurovalue = usdtvalue / USDTtoEuro
+        btcvalue = eurovalue / BTCtoEuro
+
+        actualBalances[asset] = {'amount': quantity,
+                                 'BTC_value': btcvalue,
+                                 'Euro_value': eurovalue}
+    except:
+        print("No file found")
+
 
     return actualBalances
 
@@ -148,11 +169,9 @@ if __name__ == '__main__':
         try:
             b = getbalances(client)
             wallet_detail, wallet_overview = getOverview(b)
-            pushDB(wallet_detail, wallet_overview)
+            #pushDB(wallet_detail, wallet_overview)
             sleep(55)
         except Exception as e:
-            print(e)
-            print("Error above is actual error, recreating client and retrying")
-            client = None
-            client = Client(API_KEY,API_SECRET)
+            print("{}\n Exiting".format(e))
+            exit(1)
 
