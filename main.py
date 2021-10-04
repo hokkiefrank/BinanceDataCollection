@@ -4,6 +4,7 @@ from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import subprocess
+import requests
 
 # Get environment variables from OS/Docker image
 import os
@@ -42,7 +43,6 @@ def getbalances(client):
     print("The BTC to Euro conversion at the moment of fetching is:{}".format(BTCtoEuro))
     print("These are the coins in your wallet:")
     for bal in allBalances:
-        continue
         if not bal['free'] == bal['locked']:
             asset = bal['asset']
             print(asset)
@@ -89,18 +89,19 @@ def getbalances(client):
 
     try:
         f = open("radix.txt", "r")
-        print(f.read())
-        bashCommand = "curl -s --request GET --url https://api.bitfinex.com/v1/pubticker/xrdusd | jq -r '.last_price'"
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-        print(output)
-        usdtvalue = output * f.read()
+        quantity = f.read()
+        print(quantity)
+        response = requests.get("https://api.bitfinex.com/v1/pubticker/xrdusd")
+        price = response.json()['last_price']
+        usdtvalue = float(price) * float(quantity)
         eurovalue = usdtvalue / USDTtoEuro
         btcvalue = eurovalue / BTCtoEuro
 
-        actualBalances[asset] = {'amount': quantity,
+
+        actualBalances["RDX"] = {'amount': quantity,
                                  'BTC_value': btcvalue,
                                  'Euro_value': eurovalue}
+
     except:
         print("No file found")
 
