@@ -8,7 +8,7 @@ import subprocess
 # Get environment variables from OS/Docker image
 import os
 
-TEST = True
+TEST = False
 
 if TEST:
     import credentials as cred
